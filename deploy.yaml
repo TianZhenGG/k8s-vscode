@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: code-server2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: code-server2
+  template:
+    metadata:
+      name: code-server2
+      labels:
+        name: code-server2
+    spec:
+      nodeSelector:
+        gpu-mounter-enable: enable     
+      containers:
+        - name: code-server2
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+              memory: "32Gi"
+            requests:
+              memory: "16Gi"  
+          securityContext:
+            runAsUser: 1000
+          image: code-server2
+          imagePullPolicy: IfNotPresent
+          ports:
+          - containerPort: 8080
+          volumeMounts:
+          - name: config
+            mountPath: /home/coder/.config
+          - name: data
+            mountPath: /home/coder/data
+
+      volumes:
+      - name: config
+        hostPath:
+            path: /home/tiantian/code-server2/.config
+            type: Directory
+      - name: data
+        hostPath:
+            path: /home/tiantian/code-server2/data
+            type: Directory
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: code-server2
+spec:
+  type: NodePort
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 30002
+  selector:
+    name: code-server2
